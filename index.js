@@ -1,8 +1,9 @@
 const express = require('express');
 const cors = require('cors');
-
+const socket = require('socket.io');
 const authentication = require('./Routes/Authentication');
-const mongo = require('./Models/Mongo')
+const mongo = require('./Models/Mongo');
+const common = require("./Services/Common");
 
 const app = express(); 
 
@@ -29,10 +30,6 @@ app.get('/',(req,res)=>{
 app.use('/authentication',authentication)
 
 
-app.listen(port,()=>{
-    console.log(`server is running on port ${port}`);
-})
-
 const connectToMongo = async() => {
     await mongo().then((mongoose) => {
         console.log('mongo db connected');
@@ -43,3 +40,49 @@ const connectToMongo = async() => {
 }
 
 connectToMongo();
+
+
+const server = app.listen(port,()=>{
+    console.log(`server is running on port ${port}`);
+})
+
+
+let onlineUserArray = [];
+
+const removeUser =(socketid) =>{
+   onlineUserArray = onlineUserArray.filter(user=>user.socketid != socketid);
+}
+
+const io = socket(server,{cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"]
+  }})
+
+io.on('connection',(socket)=>{
+        console.log('user connected',socket.id);
+
+     socket.on('add-user',(data)=>{
+        let decrypteduserid = common.Decrypt(data, process.env.SECERET_KEY);
+
+        onlineUserArray.push({userid:decrypteduserid,socketid:socket.id});
+        io.emit('online-users',onlineUserArray);
+
+        console.log(decrypteduserid);
+        if(decrypteduserid === '62f3e4d053ee948106c5cd70'){
+            var targetedid = onlineUserArray.filter(user => user.userid == '62f3e0a0e38d15bddb797599')
+            io.to(targetedid[0].socketid).emit('alert','hardik connected');
+            console.log(targetedid[0].socketid,targetedid[0].userid);
+        }
+
+     })
+
+     socket.on('disconnect',()=>{
+        removeUser(socket.id);
+        io.emit('online-users',onlineUserArray);
+     })
+
+     socket.on('join-group',groupid=>{
+        socket.join(groupid);
+     })
+})
+

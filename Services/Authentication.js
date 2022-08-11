@@ -2,7 +2,7 @@ const e = require("express");
 const UserSchema = require("../Models/UserSchema");
 const common = require("./Common");
 
-const client = require("twilio")("AC175f1a830e8fbf842cc929dbc16a3184","24d44686a562f83ce67c0d55f2238b5c");
+const client = require("twilio")("AC175f1a830e8fbf842cc929dbc16a3184","558321b4a05dc448a2ed168613f5ee1c");
 
 var fromContact = "+12283356016";
 
@@ -112,7 +112,7 @@ exports.signup = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     let user = await UserSchema.findOne({ phoneNumber: req.body.phoneNumber });
-
+    console.log(user);
     if (
       user != null &&
       req.body.password ===
@@ -126,6 +126,7 @@ exports.login = async (req, res) => {
         message: "Login successful",
         token: token,
         userid: encryptedUserid,
+        username:user.userName
       };
 
       res.send(response);
@@ -177,12 +178,12 @@ exports.forgotPassword = async (req, res) => {
 
 
 exports.getProfile = async (req, res) => {
-  userid = common.Decrypt(req.body.userid, process.env.SECERET_KEY);
+  var userid = common.Decrypt(req.body.userid, process.env.SECERET_KEY);
+
 
   try {
-    let user = await UserSchema.findOne({ id: userid });
+    let user = await UserSchema.findOne({ _id: userid });
 
-    console.log(user);
 
     let response = {
       username: user.userName,
@@ -207,7 +208,7 @@ exports.getProfile = async (req, res) => {
 exports.EditProfile = async (req, res) => {
   userid = common.Decrypt(req.body.userid, process.env.SECERET_KEY);
 
-  var myquery = { id: userid };
+  var myquery = { _id: userid };
   var newvalues = {
     $set: {
       firstName: req.body.firstName,
