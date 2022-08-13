@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const socket = require('socket.io');
 const authentication = require('./Routes/Authentication');
+const chat = require('./Routes/Chat');
 const mongo = require('./Models/Mongo');
 const common = require("./Services/Common");
 
@@ -27,7 +28,8 @@ app.get('/',(req,res)=>{
     res.send('Welcome to Chit Chat!');
 })
 
-app.use('/authentication',authentication)
+app.use('/authentication',authentication);
+app.use('/chat',chat);
 
 
 const connectToMongo = async() => {
@@ -47,17 +49,38 @@ const server = app.listen(port,()=>{
 })
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 let onlineUserArray = [];
 
 const removeUser =(socketid) =>{
    onlineUserArray = onlineUserArray.filter(user=>user.socketid != socketid);
 }
 
+
 const io = socket(server,{cors: {
     origin: "http://localhost:3000",
     methods: ["GET", "POST"]
   }})
 
+
+  
 io.on('connection',(socket)=>{
         console.log('user connected',socket.id);
 
@@ -67,12 +90,14 @@ io.on('connection',(socket)=>{
         onlineUserArray.push({userid:decrypteduserid,socketid:socket.id});
         io.emit('online-users',onlineUserArray);
 
-        console.log(decrypteduserid);
-        if(decrypteduserid === '62f3e4d053ee948106c5cd70'){
-            var targetedid = onlineUserArray.filter(user => user.userid == '62f3e0a0e38d15bddb797599')
-            io.to(targetedid[0].socketid).emit('alert','hardik connected');
-            console.log(targetedid[0].socketid,targetedid[0].userid);
-        }
+     socket.on('send-message',(data) =>{
+         onlineUserArray.map(user =>{
+            if(user.userid === data.receiverid){
+                console.log(user,data);
+                io.to(user.socketid).emit('receive-message',data);
+            }
+        })
+     })
 
      })
 
