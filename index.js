@@ -3,6 +3,7 @@ const cors = require('cors');
 const socket = require('socket.io');
 const authentication = require('./Routes/Authentication');
 const chat = require('./Routes/Chat');
+const group=require('./Routes/GroupChat')
 const mongo = require('./Models/Mongo');
 const common = require("./Services/Common");
 
@@ -30,6 +31,7 @@ app.get('/',(req,res)=>{
 
 app.use('/authentication',authentication);
 app.use('/chat',chat);
+app.use('/group',group);
 
 
 const connectToMongo = async() => {

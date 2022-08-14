@@ -1,8 +1,8 @@
 const e = require("express");
 const common = require("./Common");
 const UserSchema = require("../Models/UserSchema");
-const SingleChat = require("../Models/SingleChatSchema")
-
+const SingleChat = require("../Models/SingleChatSchema");
+const GroupChat = require("../Models/GroupChatSchema");
 
 
 
