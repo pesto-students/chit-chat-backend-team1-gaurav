@@ -24,7 +24,6 @@ exports.sendotp = (req, res) => {
       from: fromContact,
     })
     .then((message) => {
-      console.log(message);
       res.send({
         statusCode: 200,
         message: "Otp sent succefully",
@@ -112,7 +111,6 @@ exports.signup = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     let user = await UserSchema.findOne({ phoneNumber: req.body.phoneNumber });
-    console.log(user);
     if (
       user != null &&
       req.body.password ===

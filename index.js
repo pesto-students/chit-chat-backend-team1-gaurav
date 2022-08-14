@@ -82,8 +82,7 @@ const io = socket(server,{cors: {
 
   
 io.on('connection',(socket)=>{
-        console.log('user connected',socket.id);
-
+    console.log('user connected - ',socket.id);
      socket.on('add-user',(data)=>{
         let decrypteduserid = common.Decrypt(data, process.env.SECERET_KEY);
 
@@ -93,8 +92,35 @@ io.on('connection',(socket)=>{
      socket.on('send-message',(data) =>{
          onlineUserArray.map(user =>{
             if(user.userid === data.receiverid){
-                console.log(user,data);
                 io.to(user.socketid).emit('receive-message',data);
+            }
+        })
+     })
+
+     socket.on('user-typing',(data) =>{
+        onlineUserArray.map(user =>{
+           if(user.userid === data){
+                console.log('inside receiver emit event');
+               io.to(user.socketid).emit('receiver-typing',data);
+           }
+       })
+    })
+
+    socket.on('user-stops-typing',(data) =>{
+        onlineUserArray.map(user =>{
+           if(user.userid === data){
+                console.log('inside receiver emit event');
+               io.to(user.socketid).emit('receiver-stops-typing',data);
+           }
+       })
+    })
+
+     socket.on('contact-added',data =>{
+        console.log(data,'inside contact added');
+        onlineUserArray.map(user =>{
+            if(user.userid === data.receiverid){
+                console.log(user,'inside reload emit');
+                io.to(user.socketid).emit('reload-contacts',data);
             }
         })
      })
