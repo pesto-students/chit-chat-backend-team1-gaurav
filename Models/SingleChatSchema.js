@@ -5,7 +5,8 @@ let requiredstring  = {type: String, required: true}
 const SingleChat = mongoose.Schema({
 
     membersArray: Array,
-    messageArray : Array
+    messageArray : Array,
+    chatInfo:Object
 
 })
 
