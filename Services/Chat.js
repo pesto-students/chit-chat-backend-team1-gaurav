@@ -4,8 +4,6 @@ const UserSchema = require("../Models/UserSchema");
 const SingleChat = require("../Models/SingleChatSchema");
 const SingleChatSchema = require("../Models/SingleChatSchema");
 
-
-
 exports.CurrentContacts = async (req, res) => {
   var userid = common.Decrypt(req.body.userid, process.env.SECERET_KEY);
 
@@ -13,11 +11,10 @@ exports.CurrentContacts = async (req, res) => {
     let user = await UserSchema.findOne({ _id: userid });
 
     if (user) {
-      var singlecontacts = user.singlecontacts.sort((a, b) => 
-      {
-        return b.order - a.order
+      var singlecontacts = user.singlecontacts.sort((a, b) => {
+        return b.order - a.order;
       });
-     
+
       // var groupcontacts = user.groupcontacts;
 
       var singlecontactArray = [];
@@ -47,6 +44,7 @@ exports.LoadChat = async (req, res) => {
     let chat = await SingleChat.findOne({ _id: req.body.chatid });
 
     if (chat) {
+      console.log('call to load chat has been made.')
       res.send({ messageArray: chat.messageArray, chatInfo: chat.chatInfo });
     }
   } catch (err) {
@@ -59,19 +57,21 @@ exports.LoadChat = async (req, res) => {
 exports.updateMessageArray = async (req, res) => {
   var userid = common.Decrypt(req.body.senderid, process.env.SECERET_KEY);
 
-
-  if(req.body.updateOrder){
-    await UserSchema.updateOne({ _id:userid,"singlecontacts.contactid" : req.body.receiverid },
-                               { $set: { "singlecontacts.$.order" : req.body.order }});
-  
+  if (req.body.updateOrder) {
+    await UserSchema.updateOne(
+      { _id: userid, "singlecontacts.contactid": req.body.receiverid },
+      { $set: { "singlecontacts.$.order": req.body.order } }
+    );
   }
 
   let messagePayload = {
+    messageid: req.body.messageid,
     message: req.body.message,
     senderid: userid,
     receiverid: req.body.receiverid,
     senderstatus: "sent",
     type: req.body.type,
+    starmarked: req.body.starmarked,
     timestamp: Date.now(),
   };
 
@@ -130,14 +130,11 @@ exports.addChat = async (req, res) => {
     let newChat = await new SingleChatSchema(singlechatbody).save();
 
     if (newChat) {
-
       let singlecontactobj = {
         contactid: req.body.otheruser,
         chatid: newChat._id,
-        order:0
+        order: 0,
       };
-
-      
 
       let update = await UserSchema.updateOne(
         { _id: userid },
@@ -151,13 +148,12 @@ exports.addChat = async (req, res) => {
           message: "Chat Created Successfully",
         };
         res.send(response);
-      } 
+      }
 
-    //   throw new Error('')
-    } 
+      //   throw new Error('')
+    }
 
     // throw new Error('');
-
   } catch (err) {
     let response = { statusCode: 201, message: "Something went wrong!" };
     console.log(err);
@@ -170,7 +166,11 @@ exports.addSenderToReceiver = async (req, res) => {
 
   try {
     // let newChat = await new SingleChatSchema(singlechatbody).save();
-    let singlecontactobj = { contactid: userid, chatid: req.body.chatid,order:0 };
+    let singlecontactobj = {
+      contactid: userid,
+      chatid: req.body.chatid,
+      order: 0,
+    };
     let update = await UserSchema.updateOne(
       { _id: req.body.receiverid },
       { $push: { singlecontacts: { $each: [singlecontactobj] } } }
@@ -196,6 +196,53 @@ exports.addSenderToReceiver = async (req, res) => {
       let response = { statusCode: 201, message: "Something went wrong!" };
       res.send(response);
     }
+  } catch (err) {
+    let response = { statusCode: 201, message: "Something went wrong!" };
+    console.log(err);
+    res.send(response);
+  }
+};
+
+exports.StarMarkMessage = async (req, res) => {
+  try {
+    let updatechat = await SingleChatSchema.updateOne(
+      { _id: req.body.chatid, "messageArray.messageid": req.body.messageid },
+      { $set: { "messageArray.$.starmarked": true } }
+    );
+    if (updatechat.acknowledged) {
+      let response = {
+        statusCode: 200,
+        message: "message Updated Successfully..",
+      };
+      res.send(response);
+    } else {
+      throw new Error();
+    }
+  } catch (err) {
+    let response = { statusCode: 201, message: "Something went wrong!" };
+    console.log(err);
+    res.send(response);
+  }
+};
+
+
+exports.LoadStarMessages = async (req, res) => {
+  try {
+    // let staredMessagesArray = await SingleChatSchema.find(
+    //   { _id: req.body.chatid}, { messageArray: {$elemMatch: {starmarked: false}}}  
+    // );
+
+    let staredMessagesArray = await SingleChatSchema.aggregate([
+   {$match: {_id: req.body.chatid}},
+   {$unwind: "$messageArray"},
+   {$match: {"messageArray.starmarked": true}}
+    ])
+
+ 
+
+    res.send(staredMessagesArray);
+
+  
   } catch (err) {
     let response = { statusCode: 201, message: "Something went wrong!" };
     console.log(err);
