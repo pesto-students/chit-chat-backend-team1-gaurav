@@ -96,13 +96,15 @@ exports.updateMessageArray = async (req, res) => {
 
 exports.searchContacts = async (req, res) => {
   let text = req.body.text;
-
+  var userid = common.Decrypt(req.body.userid, process.env.SECERET_KEY);
+  console.log('user id received',userid);
   try {
     // let users = await UserSchema.find({'phoneNumber': /.*  .*/});
     let users = await UserSchema.find({
       phoneNumber: { $regex: text, $options: "i" },
     });
-    res.send(users);
+    filteredUsers=users.filter((item)=>{return (item._id!=userid)})
+    res.send(filteredUsers);
   } catch (err) {
     let response = { statusCode: 201, message: "Something went wrong!" };
     console.log(err);

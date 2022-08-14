@@ -5,25 +5,24 @@ const SingleChat = require("../Models/SingleChatSchema");
 const GroupChat = require("../Models/GroupChatSchema");
 
 exports.currentGroups = async (req, res) => {
-
-    // var userid = common.Decrypt(req.body.userid, process.env.SECERET_KEY);
-
+    var userid = common.Decrypt(req.body.userid, process.env.SECERET_KEY);
     try{
-        // let user = await UserSchema.findOne({ _id: userid });
-        let user = await UserSchema.findOne({ _id: '62f3e0a0e38d15bddb797599' });
+        let user = await UserSchema.findOne({ _id: userid });
+        // let user = await UserSchema.findOne({ _id: '62f3e0a0e38d15bddb797599' });
 
         if(user){
            
             var groupcontacts = user.groupcontacts;
-
+        
             var groupcontactArray = [];
 
             for (const contact of groupcontacts) {
                 var group =  await GroupChat.findOne({ _id: contact});
-                let {_id,name,members}=group;             
-                groupcontactArray.push({_id,name,members});
+                let {_id,name,membersArray}=group;             
+                groupcontactArray.push({_id,name,membersArray});
             }
-            res.send(groupcontactArray);
+          
+            res.send({groupcontactArray});
         }
     }
     catch (err){
@@ -54,23 +53,24 @@ exports.loadGroupChat = async (req, res) => {
 
 
 exports.createGroup=async(req,res)=>{
-    let admin='62f3e4d053ee948106c5cd70'
-    let groupmembers=['62f6416652bfdbce5369db64','62f3e0a0e38d15bddb797599']
-    let groupname='Testing 321 grp'
+    // let admin='62f3e4d053ee948106c5cd70'
+    // let groupmembers=['62f6416652bfdbce5369db64','62f3e0a0e38d15bddb797599']
+    // let groupname='Testing 321 grp'
 
-// let admin=common.Decrypt(req.body.userid, process.env.SECERET_KEY);
-// let {groupmembers,groupname}=req.body
+req.body.user.userid=common.Decrypt(req.body.user.userid, process.env.SECERET_KEY);
+let {user:admin,groupmembers,groupname}=req.body
     try{
        let newGroup= await new GroupChat({
             name:groupname,
-            membersArray: [...groupmembers,admin],
+            membersArray: [...groupmembers],
             messageArray : [],
             adminArray:[admin]
         }).save()
       
-    for(let member of newGroup.membersArray){
-     await addGroupToUser(member,newGroup._id)
+    for(let member of groupmembers){
+     await addGroupToUser(member.userid,newGroup._id)
     } 
+    await addGroupToUser(admin.userid,newGroup._id);
         res.send('Group is created');
     }
     catch(err){
