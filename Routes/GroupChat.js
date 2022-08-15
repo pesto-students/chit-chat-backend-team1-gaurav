@@ -5,7 +5,7 @@ const router = express.Router();
 const group = require('../Services/GroupChat');
 
 router.post('/currentgroups',group.currentGroups);
-router.get('/groupchat',group.loadGroupChat);
+router.post('/loadgroupchat',group.loadGroupChat);
 
 router.post('/creategroup',group.createGroup)
 router.post('/updategroupmessagearray',group.updateMessageArray);

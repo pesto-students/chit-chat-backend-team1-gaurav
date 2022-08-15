@@ -18,7 +18,7 @@ exports.currentGroups = async (req, res) => {
 
             for (const contact of groupcontacts) {
                 var group =  await GroupChat.findOne({ _id: contact});
-                if(group !== null){
+                if(group){
                     let {_id,name,membersArray}=group;             
                     groupcontactArray.push({_id,name,membersArray});
                 }
@@ -38,8 +38,8 @@ exports.currentGroups = async (req, res) => {
 exports.loadGroupChat = async (req, res) => {
     try{
 
-        // let chat = await GroupChat.findOne({ _id: req.body.chatid });
-        let chat = await GroupChat.findOne({ _id:"62f78b1d46c059027cf82fcf" });
+        let chat = await GroupChat.findOne({ _id: req.body.chatid });
+        // let chat = await GroupChat.findOne({ _id:"62f78b1d46c059027cf82fcf" });
 
         if(chat){
             res.send(chat);
