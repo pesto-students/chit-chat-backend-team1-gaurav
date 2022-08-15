@@ -18,11 +18,13 @@ exports.currentGroups = async (req, res) => {
 
             for (const contact of groupcontacts) {
                 var group =  await GroupChat.findOne({ _id: contact});
-                let {_id,name,membersArray}=group;             
-                groupcontactArray.push({_id,name,membersArray});
+                if(group !== null){
+                    let {_id,name,membersArray}=group;             
+                    groupcontactArray.push({_id,name,membersArray});
+                }
             }
           
-            res.send({groupcontactArray});
+            res.send(groupcontactArray);
         }
     }
     catch (err){

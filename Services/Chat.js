@@ -72,6 +72,7 @@ exports.updateMessageArray = async (req, res) => {
     senderstatus: "sent",
     type: req.body.type,
     starmarked: req.body.starmarked,
+    url:req.body.url,
     timestamp: Date.now(),
   };
 
