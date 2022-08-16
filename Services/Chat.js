@@ -9,6 +9,7 @@ exports.CurrentContacts = async (req, res) => {
 
   try {
     let user = await UserSchema.findOne({ _id: userid });
+    // let user = await UserSchema.findOne({ _id: req.body.userid });
 
     if (user) {
       var singlecontacts = user.singlecontacts.sort((a, b) => {
@@ -23,9 +24,16 @@ exports.CurrentContacts = async (req, res) => {
       for (const contact of singlecontacts) {
         let singleContactObj = {};
         var contactuser = await UserSchema.findOne({ _id: contact.contactid });
+        var contactChat = await SingleChat.findOne({ _id: contact.chatid },{ messageArray: { $slice: 1 } });
+
+        console.log('contact chat',contactChat.messageArray);
+
         singleContactObj["userid"] = contact.contactid;
         singleContactObj["username"] = contactuser.userName;
         singleContactObj["chatid"] = contact.chatid;
+        singleContactObj["lastMessage"] = (contactChat.messageArray.length !== 0 )?contactChat.messageArray[0].message:'';
+        singleContactObj["timestamp"] = (contactChat.messageArray.length !== 0 )?contactChat.messageArray[0].timestamp:'';
+        singleContactObj["sent"] = (contactChat.messageArray.length !== 0 )?((userid === contactChat.messageArray[0].senderid) ? true : false):false;
 
         singlecontactArray.push(singleContactObj);
       }
@@ -44,7 +52,6 @@ exports.LoadChat = async (req, res) => {
     let chat = await SingleChat.findOne({ _id: req.body.chatid });
 
     if (chat) {
-      console.log('call to load chat has been made.')
       res.send({ messageArray: chat.messageArray, chatInfo: chat.chatInfo });
     }
   } catch (err) {
@@ -98,7 +105,6 @@ exports.updateMessageArray = async (req, res) => {
 exports.searchContacts = async (req, res) => {
   let text = req.body.text;
   var userid = common.Decrypt(req.body.userid, process.env.SECERET_KEY);
-  console.log('user id received',userid);
   try {
     // let users = await UserSchema.find({'phoneNumber': /.*  .*/});
     let users = await UserSchema.find({
@@ -232,7 +238,7 @@ exports.StarMarkMessage = async (req, res) => {
 exports.LoadStarMessages = async (req, res) => {
   try {
     // let staredMessagesArray = await SingleChatSchema.find(
-    //   { _id: req.body.chatid}, { messageArray: {$elemMatch: {starmarked: false}}}  
+    //   { _id: req.body.chatid}, { messageArray: {$elemMatch: {starmarked: true}}}  
     // );
 
     let staredMessagesArray = await SingleChatSchema.aggregate([

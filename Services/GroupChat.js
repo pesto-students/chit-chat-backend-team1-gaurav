@@ -17,10 +17,19 @@ exports.currentGroups = async (req, res) => {
             var groupcontactArray = [];
 
             for (const contact of groupcontacts) {
-                var group =  await GroupChat.findOne({ _id: contact});
+                var group =  await GroupChat.findOne({ _id: contact.groupId});
                 if(group){
-                    let {_id,name,membersArray}=group;             
-                    groupcontactArray.push({_id,name,membersArray});
+                    let {_id,name,membersArray,messageArray}=group; 
+                    
+                    let filteredMemberArray = membersArray.filter((member) =>{
+                        return member.userid !== userid; 
+                    })
+
+                    let lastMessage = (messageArray.length !== 0) ? messageArray[0].message: '';
+                    let timestamp =(messageArray.length !== 0 )?messageArray[0].timestamp:'';
+                    let sent =(messageArray.length !== 0 )?((userid === messageArray[0].senderid) ? true : false):false;
+                    
+                    groupcontactArray.push({groupid:_id,groupname:name,groupmembersarray:filteredMemberArray,lastMessage,timestamp,sent});
                 }
             }
           
@@ -64,7 +73,7 @@ let {user:admin,groupmembers,groupname}=req.body
     try{
        let newGroup= await new GroupChat({
             name:groupname,
-            membersArray: [...groupmembers],
+            membersArray: [...groupmembers,admin],
             messageArray : [],
             adminArray:[admin]
         }).save()
@@ -235,19 +244,55 @@ exports.removeGroupAdmin=async(req,res)=>{
 }
 
 
+exports.updateMessageArray = async (req, res) => {
+    var userid = common.Decrypt(req.body.senderid, process.env.SECERET_KEY);
+    try {
 
-exports.updateMessageArray=async(req,res)=>{
-    
-}
+    if (req.body.updateOrder) {
+        let updaed = await UserSchema.updateOne(
+          { _id: userid, "groupcontacts.groupId": req.body.groupid },
+          { $set: { "groupcontacts.$.order": req.body.order } }
+        );
+            console.log(updaed);
+      } 
+  
+    let messagePayload = {
+      messageid: req.body.messageid,
+      message: req.body.message,
+      senderid: userid,
+      senderstatus: "sent",
+      type: req.body.type,
+      starmarked: req.body.starmarked,
+      url:req.body.url,
+      timestamp: Date.now(),
+    };
+  
+   
+      let update = await GroupChat.updateOne(
+        { _id: req.body.groupid },
+        { $push: { messageArray: { $each: [messagePayload], $position: 0 } } }
+      );
+  
+      if (update.acknowledged) {
+        res.send(messagePayload);
+      } else {
+        let response = { statusCode: 201, message: "Something went wrong!" };
+        res.send(response);
+      }
+    } catch (err) {
+      let response = { statusCode: 201, message: "Something went wrong!" };
+      console.log(err);
+      res.send(response);
+    }
+  };
+  
 
 
 
 checkGroupAdminStatus=async (userId,groupId)=>{
     try{
     let groupchat = await GroupChat.findOne({_id:groupId})
-    console.log('group',groupchat);
-    let find= groupchat.adminArray.find((user)=>{ return user===userId});
-    console.log('find',find);
+    let find= groupchat.adminArray.find((user)=>{ return user===userId})
     
             if(find){
                 return true
@@ -265,7 +310,7 @@ checkGroupAdminStatus=async (userId,groupId)=>{
 addGroupToUser=async (userId,groupId)=>{
     try{
         let update = await UserSchema.updateOne(
-            { _id: userId },{$push: {groupcontacts:groupId}}
+            { _id: userId },{$push: {groupcontacts:{groupId:groupId,order:0}}}
          )
          return update.acknowledged
     }
@@ -277,7 +322,7 @@ addGroupToUser=async (userId,groupId)=>{
 removeGroupFromUser=async (userId,groupId)=>{
     try{
         let update = await UserSchema.updateOne(
-            { _id: userId },{$pull: {groupcontacts:groupId}}
+            { _id: userId },{$pull: {groupcontacts:{groupId:groupId,order:0}}}
          )
          return update.acknowledged
     }
