@@ -19,6 +19,7 @@ exports.currentGroups = async (req, res) => {
             for (const contact of groupcontacts) {
                 var group =  await GroupChat.findOne({ _id: contact.groupId});
                 if(group){
+                    
                     let {_id,name,membersArray,messageArray}=group; 
                     
                     let filteredMemberArray = membersArray.filter((member) =>{

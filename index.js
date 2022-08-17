@@ -130,6 +130,40 @@ io.on("connection", (socket) => {
       io.to(groupid).emit("stops-typing-in-group", groupid);
   });
 
+
+  socket.on('call-user',(data) => {
+    onlineUserArray.map((user) => {
+      if (user.userid === data.userid) {
+        io.to(user.socketid).emit("incoming-call", data);
+      }
+    });
+  })
+
+
+  socket.on('cancle-call',(data) => {
+    onlineUserArray.map((user) => {
+      if (user.userid === data.userid) {
+        io.to(user.socketid).emit("call-cancled", data);
+      }
+    });
+  })
+
+  socket.on('reject-incoming-call',(data) => {
+    onlineUserArray.map((user) => {
+      if (user.userid === data.userid) {
+        io.to(user.socketid).emit("call-rejected", data);
+      }
+    });
+  })
+
+  socket.on('accept-incoming-call',(data) => {
+    onlineUserArray.map((user) => {
+      if (user.userid === data.userid) {
+        io.to(user.socketid).emit("call-Accepted", data);
+      }
+    });
+  })
+
   socket.on("disconnect", () => {
     removeUser(socket.id);
     io.emit("online-users", onlineUserArray);
