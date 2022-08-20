@@ -15,5 +15,6 @@ router.post('/removeParticipant',group.removeParticipant)
 
 router.post('/addAdmin',group.addGroupAdmin)
 router.post('/removeAdmin',group.removeGroupAdmin)
+router.post('/pagination',group.pagination)
 
 module.exports = router;

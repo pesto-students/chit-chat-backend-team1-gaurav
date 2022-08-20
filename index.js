@@ -164,6 +164,14 @@ io.on("connection", (socket) => {
     });
   })
 
+  socket.on('hang-call',(data) => {
+    onlineUserArray.map((user) => {s
+      if (user.userid === data.userid) {
+        io.to(user.socketid).emit("call-Hanged", data);
+      }
+    });
+  })
+
   socket.on("disconnect", () => {
     removeUser(socket.id);
     io.emit("online-users", onlineUserArray);

@@ -24,16 +24,30 @@ exports.CurrentContacts = async (req, res) => {
       for (const contact of singlecontacts) {
         let singleContactObj = {};
         var contactuser = await UserSchema.findOne({ _id: contact.contactid });
-        var contactChat = await SingleChat.findOne({ _id: contact.chatid },{ messageArray: { $slice: 1 } });
+        var contactChat = await SingleChat.findOne(
+          { _id: contact.chatid },
+          { messageArray: { $slice: 1 } }
+        );
 
-        console.log('contact chat',contactChat.messageArray);
+        console.log("contact chat", contactChat.messageArray);
 
         singleContactObj["userid"] = contact.contactid;
         singleContactObj["username"] = contactuser.userName;
         singleContactObj["chatid"] = contact.chatid;
-        singleContactObj["lastMessage"] = (contactChat.messageArray.length !== 0 )?contactChat.messageArray[0].message:'';
-        singleContactObj["timestamp"] = (contactChat.messageArray.length !== 0 )?contactChat.messageArray[0].timestamp:'';
-        singleContactObj["sent"] = (contactChat.messageArray.length !== 0 )?((userid === contactChat.messageArray[0].senderid) ? true : false):false;
+        singleContactObj["lastMessage"] =
+          contactChat.messageArray.length !== 0
+            ? contactChat.messageArray[0].message
+            : "";
+        singleContactObj["timestamp"] =
+          contactChat.messageArray.length !== 0
+            ? contactChat.messageArray[0].timestamp
+            : "";
+        singleContactObj["sent"] =
+          contactChat.messageArray.length !== 0
+            ? userid === contactChat.messageArray[0].senderid
+              ? true
+              : false
+            : false;
 
         singlecontactArray.push(singleContactObj);
       }
@@ -49,7 +63,8 @@ exports.CurrentContacts = async (req, res) => {
 
 exports.LoadChat = async (req, res) => {
   try {
-    let chat = await SingleChat.findOne({ _id: req.body.chatid });
+    console.log(req.body.start,req.body.end);
+    let chat = await SingleChat.findOne({ _id: req.body.chatid },{messageArray:{$slice:[req.body.start,req.body.end]}});
 
     if (chat) {
       res.send({ messageArray: chat.messageArray, chatInfo: chat.chatInfo });
@@ -79,7 +94,7 @@ exports.updateMessageArray = async (req, res) => {
     senderstatus: "sent",
     type: req.body.type,
     starmarked: req.body.starmarked,
-    url:req.body.url,
+    url: req.body.url,
     timestamp: Date.now(),
   };
 
@@ -110,7 +125,9 @@ exports.searchContacts = async (req, res) => {
     let users = await UserSchema.find({
       phoneNumber: { $regex: text, $options: "i" },
     });
-    filteredUsers=users.filter((item)=>{return (item._id!=userid)})
+    filteredUsers = users.filter((item) => {
+      return item._id != userid;
+    });
     res.send(filteredUsers);
   } catch (err) {
     let response = { statusCode: 201, message: "Something went wrong!" };
@@ -143,6 +160,7 @@ exports.addChat = async (req, res) => {
         contactid: req.body.otheruser,
         chatid: newChat._id,
         order: 0,
+        staredMessages: [],
       };
 
       let update = await UserSchema.updateOne(
@@ -179,6 +197,7 @@ exports.addSenderToReceiver = async (req, res) => {
       contactid: userid,
       chatid: req.body.chatid,
       order: 0,
+      staredMessages: [],
     };
     let update = await UserSchema.updateOne(
       { _id: req.body.receiverid },
@@ -213,11 +232,26 @@ exports.addSenderToReceiver = async (req, res) => {
 };
 
 exports.StarMarkMessage = async (req, res) => {
+  let userid = common.Decrypt(req.body.userid, process.env.SECERET_KEY);
+
   try {
-    let updatechat = await SingleChatSchema.updateOne(
-      { _id: req.body.chatid, "messageArray.messageid": req.body.messageid },
-      { $set: { "messageArray.$.starmarked": true } }
+    let starMessageObj = {
+      message: req.body.message,
+      timestamp: req.body.timestamp,
+      type: req.body.type,
+    };
+
+    console.log(starMessageObj,req.body.chatid)
+
+    let updatechat = await UserSchema.updateOne(
+      { _id: userid, "singlecontacts.$.chatid": req.body.chatid },
+      {
+        $push: {
+          "singlecontacts.$.staredMessages": { $each: [starMessageObj] },
+        },
+      }
     );
+
     if (updatechat.acknowledged) {
       let response = {
         statusCode: 200,
@@ -234,27 +268,28 @@ exports.StarMarkMessage = async (req, res) => {
   }
 };
 
-
 exports.LoadStarMessages = async (req, res) => {
+  let userid = common.Decrypt(req.body.userid, process.env.SECERET_KEY);
+
   try {
-    // let staredMessagesArray = await SingleChatSchema.find(
-    //   { _id: req.body.chatid}, { messageArray: {$elemMatch: {starmarked: true}}}  
-    // );
+    let user = await UserSchema.find({ _id: userid });
+    console.log(req.body.chatid);
+    let contactsArray = user[0].singlecontacts;
 
-    let staredMessagesArray = await SingleChatSchema.aggregate([
-   {$match: {_id: req.body.chatid}},
-   {$unwind: "$messageArray"},
-   {$match: {"messageArray.starmarked": true}}
-    ])
+    var starMessageArray = [];
+    contactsArray.map((contact) => {
+      if (contact.chatid == req.body.chatid) {
+        starMessageArray = contact.staredMessages
+      }
+    });
 
- 
+    res.send(starMessageArray);
 
-    res.send(staredMessagesArray);
 
-  
   } catch (err) {
     let response = { statusCode: 201, message: "Something went wrong!" };
     console.log(err);
     res.send(response);
   }
 };
+

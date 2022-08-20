@@ -47,9 +47,8 @@ exports.currentGroups = async (req, res) => {
 
 exports.loadGroupChat = async (req, res) => {
     try{
-
-        let chat = await GroupChat.findOne({ _id: req.body.chatid });
-        // let chat = await GroupChat.findOne({ _id:"62f78b1d46c059027cf82fcf" });
+        console.log(req.body.chatid,req.body.start,req.body.end);
+        let chat = await GroupChat.findOne({ _id: req.body.chatid },{messageArray:{$slice:[req.body.start,req.body.end]}});
 
         if(chat){
             res.send(chat);
@@ -332,3 +331,20 @@ removeGroupFromUser=async (userId,groupId)=>{
     }
 }    
     
+
+exports.pagination = async (req, res) => {
+    try{
+       
+        let chat = await GroupChat.findOne({ _id: '62fa18026a72beeb69fac477' },{messageArray:{$slice:[0,15]}});
+
+        if(chat){
+            res.send(chat);
+        }
+    }
+    catch (err){
+        let response = { statusCode: 201, message: "Something went wrong!" };
+        console.log(err);
+        res.send(response); 
+    }
+
+};
