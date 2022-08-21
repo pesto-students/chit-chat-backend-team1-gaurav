@@ -66,7 +66,7 @@ const removeUser = (socketid) => {
 
 const io = socket(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "https://chit-chat-communication.netlify.app",
     methods: ["GET", "POST"],
   },
 });
