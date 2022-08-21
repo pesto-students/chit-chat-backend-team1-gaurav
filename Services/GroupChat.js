@@ -92,27 +92,30 @@ let {user:admin,groupmembers,groupname}=req.body
 }
 
 exports.addParticipant=async(req,res)=>{
-    let addParticipant='00000000000000000000'
-    let groupid='62f7b50f74c87885d345c8b6'
-    // var userid = common.Decrypt(req.body.userid, process.env.SECERET_KEY);
-    // let {addParticipant,groupid}=req.body
-    //  let status=await checkGroupAdminStatus(userid,groupid);
-   let status=await checkGroupAdminStatus('62f3e4d053ee948106c5cd70','62f7b50f74c87885d345c8b6');
+    console.log('add participants api hit',req.body);
+    var userid = common.Decrypt(req.body.userid, process.env.SECERET_KEY);
+    let {addParticipants,groupid}=req.body
+     let status=await checkGroupAdminStatus(userid,groupid);
+     console.log('admin status',status);
+
 
    if(status){
+    console.log('adding participant')
     try{
-        let update = await GroupChat.updateOne(
-            { _id: groupid },{$push: {membersArray:addParticipant}}
-         )
-        if(update.acknowledged){
-            await addGroupToUser(addParticipant,groupid);
-            res.send({
-                statusCode:204,
-                message:'Member added'
-             })
-        } 
-        else{
-            throw new Error('Not able to add this number')
+        for (addParticipant of addParticipants){
+            let update = await GroupChat.updateOne(
+                { _id: groupid },{$push: {membersArray:{...addParticipant}}}
+             )
+            if(update.acknowledged){
+                await addGroupToUser(addParticipant.userid,groupid);
+                res.send({
+                    statusCode:204,
+                    message:'Member added'
+                 })
+            } 
+            else{
+                throw new Error('Not able to add this number')
+            }
         }
     }
     catch(err){
@@ -292,7 +295,7 @@ exports.updateMessageArray = async (req, res) => {
 checkGroupAdminStatus=async (userId,groupId)=>{
     try{
     let groupchat = await GroupChat.findOne({_id:groupId})
-    let find= groupchat.adminArray.find((user)=>{ return user===userId})
+    let find= groupchat.adminArray.find((user)=>{ return user.userid===userId})
     
             if(find){
                 return true
