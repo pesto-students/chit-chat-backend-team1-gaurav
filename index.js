@@ -72,7 +72,6 @@ const io = socket(server, {
 });
 
 io.on("connection", (socket) => {
-  console.log("user connected - ", socket.id);
   socket.on("add-user", (data) => {
     let decrypteduserid = common.Decrypt(data, process.env.SECERET_KEY);
 
