@@ -47,7 +47,6 @@ exports.currentGroups = async (req, res) => {
 
 exports.loadGroupChat = async (req, res) => {
     try{
-        console.log(req.body.chatid,req.body.start,req.body.end);
         let chat = await GroupChat.findOne({ _id: req.body.chatid },{messageArray:{$slice:[req.body.start,req.body.end]}});
 
         if(chat){
@@ -260,15 +259,16 @@ exports.updateMessageArray = async (req, res) => {
       } 
   
     let messagePayload = {
-      messageid: req.body.messageid,
       message: req.body.message,
       senderid: userid,
-      senderstatus: "sent",
       type: req.body.type,
-      starmarked: req.body.starmarked,
-      url:req.body.url,
       timestamp: Date.now(),
     };
+
+    if(req.body.url !== undefined || req.body.url !== null)
+    {
+        messagePayload = req.body.url
+    }
   
    
       let update = await GroupChat.updateOne(
