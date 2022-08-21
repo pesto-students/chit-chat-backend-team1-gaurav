@@ -2,12 +2,11 @@ const mongoose = require('mongoose');
 
 let requiredstring  = {type: String, required: true}
 
-const SingleChat = mongoose.Schema({
-
+const GroupChat = mongoose.Schema({
+    name:requiredstring,
     membersArray: Array,
     messageArray : Array,
-    chatInfo:Object
-
+    adminArray:Array
 })
 
-module.exports = mongoose.model('singlechats',SingleChat);
+module.exports = mongoose.model('groupChats',GroupChat);
