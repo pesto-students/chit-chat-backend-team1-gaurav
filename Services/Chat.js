@@ -29,7 +29,6 @@ exports.CurrentContacts = async (req, res) => {
           { messageArray: { $slice: 1 } }
         );
 
-        console.log("contact chat", contactChat.messageArray);
 
         singleContactObj["userid"] = contact.contactid;
         singleContactObj["username"] = contactuser.userName;
@@ -63,8 +62,10 @@ exports.CurrentContacts = async (req, res) => {
 
 exports.LoadChat = async (req, res) => {
   try {
-    console.log(req.body.start,req.body.end);
-    let chat = await SingleChat.findOne({ _id: req.body.chatid },{messageArray:{$slice:[req.body.start,req.body.end]}});
+    let chat = await SingleChat.findOne(
+      { _id: req.body.chatid },
+      { messageArray: { $slice: [req.body.start, req.body.end] } }
+    );
 
     if (chat) {
       res.send({ messageArray: chat.messageArray, chatInfo: chat.chatInfo });
@@ -87,16 +88,16 @@ exports.updateMessageArray = async (req, res) => {
   }
 
   let messagePayload = {
-    messageid: req.body.messageid,
     message: req.body.message,
     senderid: userid,
     receiverid: req.body.receiverid,
-    senderstatus: "sent",
     type: req.body.type,
-    starmarked: req.body.starmarked,
-    url: req.body.url,
     timestamp: Date.now(),
   };
+
+  if (req.body.url != undefined || req.body.url != null) {
+    messagePayload.url = req.body.url;
+  }
 
   try {
     let update = await SingleChat.updateOne(
@@ -128,6 +129,9 @@ exports.searchContacts = async (req, res) => {
     filteredUsers = users.filter((item) => {
       return item._id != userid;
     });
+
+   
+
     res.send(filteredUsers);
   } catch (err) {
     let response = { statusCode: 201, message: "Something went wrong!" };
@@ -241,29 +245,38 @@ exports.StarMarkMessage = async (req, res) => {
       type: req.body.type,
     };
 
-    console.log(starMessageObj,req.body.chatid)
+    console.log(starMessageObj, req.body.contactid,userid);
 
-    let updatechat = await UserSchema.updateOne(
-      { _id: userid, "singlecontacts.$.chatid": req.body.chatid },
-      {
-        $push: {
-          "singlecontacts.$.staredMessages": { $each: [starMessageObj] },
-        },
-      }
-    );
+    new Promise( async (resolve,reject) => {
 
-    if (updatechat.acknowledged) {
-      let response = {
-        statusCode: 200,
-        message: "message Updated Successfully..",
-      };
-      res.send(response);
-    } else {
-      throw new Error();
-    }
+      let user = await UserSchema.findOne({  _id: userid, "singlecontacts.staredMessages.timestamp": req.body.timestamp })
+
+      if(user === null)
+      resolve()
+      else
+      reject()
+
+    })
+    .then( async () => {
+      
+      await UserSchema.updateOne(
+          { _id: userid, "singlecontacts.contactid": req.body.contactid },
+          { $push: {
+            "singlecontacts.$.staredMessages": { $each: [starMessageObj] },
+          }}
+        );
+
+        let response = {statusCode: 200,message: "Star Marked Successfully..",};
+        res.send(response);
+    })
+    .catch(() => {
+      let response = {statusCode: 200,message: "Already Added..",};
+        res.send(response);
+    })
+
+
   } catch (err) {
     let response = { statusCode: 201, message: "Something went wrong!" };
-    console.log(err);
     res.send(response);
   }
 };
@@ -273,23 +286,19 @@ exports.LoadStarMessages = async (req, res) => {
 
   try {
     let user = await UserSchema.find({ _id: userid });
-    console.log(req.body.chatid);
     let contactsArray = user[0].singlecontacts;
 
     var starMessageArray = [];
     contactsArray.map((contact) => {
       if (contact.chatid == req.body.chatid) {
-        starMessageArray = contact.staredMessages
+        starMessageArray = contact.staredMessages;
       }
     });
 
     res.send(starMessageArray);
-
-
   } catch (err) {
     let response = { statusCode: 201, message: "Something went wrong!" };
     console.log(err);
     res.send(response);
   }
 };
-
