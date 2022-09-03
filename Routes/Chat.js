@@ -12,5 +12,9 @@ router.post('/addchat',Chat.addChat);
 router.post('/addsendertoreceiver',Chat.addSenderToReceiver);
 router.post('/starmarkmessage',Chat.StarMarkMessage);
 router.post('/loadstarmessages',Chat.LoadStarMessages);
+router.post('/getimagesarray',Chat.GetImagesArray);
+router.post('/updateimagesarray',Chat.UpdateImagesArray);
+router.post('/updatedocumentsarray',Chat.updateDocumentsArray);
+router.post('/getdocumentsarray',Chat.getDocumentsArray);
 
 module.exports = router;

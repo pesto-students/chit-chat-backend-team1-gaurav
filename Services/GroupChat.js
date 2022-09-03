@@ -12,7 +12,9 @@ exports.currentGroups = async (req, res) => {
 
         if(user){
            
-            var groupcontacts = user.groupcontacts;
+            var groupcontacts = user.groupcontacts.sort((a, b) => {
+                                  return b.order - a.order;
+                                });
         
             var groupcontactArray = [];
 
@@ -74,7 +76,9 @@ let {user:admin,groupmembers,groupname}=req.body
             name:groupname,
             membersArray: [...groupmembers,admin],
             messageArray : [],
-            adminArray:[admin]
+            adminArray:[admin],
+            documentArray:[],
+            imagesArray:[]
         }).save()
       
     for(let member of groupmembers){
@@ -91,15 +95,15 @@ let {user:admin,groupmembers,groupname}=req.body
 }
 
 exports.addParticipant=async(req,res)=>{
-    console.log('add participants api hit',req.body);
+ 
     var userid = common.Decrypt(req.body.userid, process.env.SECERET_KEY);
     let {addParticipants,groupid}=req.body
      let status=await checkGroupAdminStatus(userid,groupid);
-     console.log('admin status',status);
+
 
 
    if(status){
-    console.log('adding participant')
+
     try{
         for (addParticipant of addParticipants){
             let update = await GroupChat.updateOne(
@@ -255,22 +259,27 @@ exports.updateMessageArray = async (req, res) => {
           { _id: userid, "groupcontacts.groupId": req.body.groupid },
           { $set: { "groupcontacts.$.order": req.body.order } }
         );
-            console.log(updaed);
+            
       } 
   
-    let messagePayload = {
+    var messagePayload = {
       message: req.body.message,
       senderid: userid,
       type: req.body.type,
       timestamp: Date.now(),
     };
 
-    if(req.body.url !== undefined || req.body.url !== null)
+    console.log('req body',req.body)
+
+    if(req.body.key)
     {
-        messagePayload = req.body.url
+        messagePayload.key = req.body.key
+        console.log('inside if',req.body.key)
+        
     }
   
-   
+
+
       let update = await GroupChat.updateOne(
         { _id: req.body.groupid },
         { $push: { messageArray: { $each: [messagePayload], $position: 0 } } }
@@ -313,7 +322,7 @@ checkGroupAdminStatus=async (userId,groupId)=>{
 addGroupToUser=async (userId,groupId)=>{
     try{
         let update = await UserSchema.updateOne(
-            { _id: userId },{$push: {groupcontacts:{groupId:groupId,order:0}}}
+            { _id: userId },{$push: {groupcontacts:{groupId:(groupId).toString(),order:0,staredMessages:[]}}}
          )
          return update.acknowledged
     }
@@ -335,19 +344,182 @@ removeGroupFromUser=async (userId,groupId)=>{
 }    
     
 
-exports.pagination = async (req, res) => {
-    try{
-       
-        let chat = await GroupChat.findOne({ _id: '62fa18026a72beeb69fac477' },{messageArray:{$slice:[0,15]}});
+exports.StarMarkMessage = async (req, res) => {
+    let userid = common.Decrypt(req.body.userid, process.env.SECERET_KEY);
 
-        if(chat){
-            res.send(chat);
+    console.log('hello')
+    
+    try {
+      var starMessageObj = {
+        message: req.body.message,
+        timestamp: req.body.timestamp,
+        type: req.body.type,
+      };
+      
+      if(req.body.senderid){
+        starMessageObj.senderid = req.body.senderid
+      }
+
+  
+      new Promise( async (resolve,reject) => {
+  
+        let user = await UserSchema.findOne({  _id: userid, "groupcontacts.staredMessages.timestamp": req.body.timestamp })
+  
+        if(user === null)
+        resolve()
+        else
+        reject()
+  
+      })
+      .then( async () => {
+        
+        console.log('inside resolve',userid,req.body.groupid,starMessageObj);
+
+        await UserSchema.updateOne(
+            { _id: userid, "groupcontacts.groupId": req.body.groupid },
+            { $push: {
+              "groupcontacts.$.staredMessages": { $each: [starMessageObj] },
+            }}
+          );
+  
+          let response = {statusCode: 200,message: "Star Marked Successfully..",};
+          res.send(response);
+      })
+      .catch(() => {
+        let response = {statusCode: 200,message: "Already Added..",};
+          res.send(response);
+      })
+  
+  
+    } catch (err) {
+      let response = { statusCode: 201, message: "Something went wrong!" };
+      res.send(response);
+    }
+  };
+  
+  exports.LoadStarMessages = async (req, res) => {
+    let userid = common.Decrypt(req.body.userid, process.env.SECERET_KEY);
+  
+    try {
+      let user = await UserSchema.find({ _id: userid });
+      let contactsArray = user[0].groupcontacts;
+  
+      var starMessageArray = [];
+      contactsArray.map((contact) => {
+        if (contact.groupId == req.body.groupid) {
+          starMessageArray = contact.staredMessages;
         }
+      });
+  
+      res.send(starMessageArray);
+    } catch (err) {
+      let response = { statusCode: 201, message: "Something went wrong!" };
+      console.log(err);
+      res.send(response);
     }
-    catch (err){
-        let response = { statusCode: 201, message: "Something went wrong!" };
-        console.log(err);
-        res.send(response); 
-    }
+  };
 
-};
+
+  
+exports.GetImagesArray = async (req, res) => {
+
+    try {
+  
+      let chatObj = await GroupChat.find(
+        { _id: req.body.groupid }
+      );
+  
+      res.send(chatObj[0].imagesArray);
+  
+    } catch (err) {
+      let response = { statusCode: 201, message: "Something went wrong!" };
+      console.log(err);
+      res.send(response);
+    }
+  };
+  
+  exports.UpdateImagesArray = async (req, res) => {
+  
+    try {
+  
+      let imageObj={
+        key:req.body.key,
+        timestamp:Date.now()
+      }
+  
+      console.clear();
+      console.log(req.body);
+
+      let update = await GroupChat.updateOne(
+        { _id: req.body.groupid },
+        { $push: { imagesArray: { $each: [imageObj], $position: 0 } } }
+      );
+  
+     
+      if(update.modifiedCount === 1){
+        let response = { statusCode: 200 };
+        res.send(response);
+      }
+      else{
+        let response = { statusCode: 201 };
+        res.send(response);
+      }
+  
+    } catch (err) {
+      let response = { statusCode: 201, message: "Something went wrong!" };
+      console.log(err);
+      res.send(response);
+    }
+  };
+  
+  
+  exports.getDocumentsArray = async (req, res) => {
+  
+    try {
+  
+      let chatObj = await GroupChat.find(
+        { _id: req.body.groupid }
+      );
+  
+      res.send(chatObj[0].documentArray);
+  
+    } catch (err) {
+      let response = { statusCode: 201, message: "Something went wrong!" };
+      console.log(err);
+      res.send(response);
+    }
+  };
+  
+  
+  exports.updateDocumentsArray = async (req, res) => {
+  
+    try {
+  
+      let documentObj={
+        key:req.body.key,
+        name:req.body.name,
+        size:req.body.size,
+        timestamp:Date.now()
+      }
+  
+      let update = await GroupChat.updateOne(
+        { _id: req.body.groupid },
+        { $push: { documentArray: { $each: [documentObj], $position: 0 } } }
+      );
+  
+     
+      if(update.modifiedCount === 1){
+        let response = { statusCode: 200 };
+        res.send(response);
+      }
+      else{
+        let response = { statusCode: 201 };
+        res.send(response);
+      }
+  
+    } catch (err) {
+      let response = { statusCode: 201, message: "Something went wrong!" };
+      console.log(err);
+      res.send(response);
+    }
+  };
