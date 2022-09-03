@@ -283,3 +283,29 @@ exports.changePassword = async(req,res) => {
 
 }
 
+
+exports.updateProfilePic=async(req,res)=>{
+  userid = common.Decrypt(req.body.userid, process.env.SECERET_KEY);
+  var myquery = { _id: userid };
+  var newvalues = {
+    $set: {
+      profilePic:req.body.profilePic
+    },
+  };
+
+  try {
+    await UserSchema.updateOne(myquery, newvalues);
+
+    let response = {
+      statusCode: 200,
+      message: "Profile Picture Changed Successfully",
+    };
+
+    res.send(response);
+  } catch (error) {
+    let response = { statusCode: 201, message: "Something went wrong!" };
+    console.log(error);
+    res.send(response);
+  }
+}
+
