@@ -32,6 +32,7 @@ exports.CurrentContacts = async (req, res) => {
 
         singleContactObj["userid"] = contact.contactid;
         singleContactObj["username"] = contactuser.userName;
+        singleContactObj["profileImg"] = contactuser.profileImg;
         singleContactObj["chatid"] = contact.chatid;
         singleContactObj["lastMessage"] =
           contactChat.messageArray.length !== 0

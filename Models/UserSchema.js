@@ -9,6 +9,7 @@ const UserSchema = mongoose.Schema({
     email: requiredstring,
     phoneNumber: requiredstring,
     password: requiredstring,
+    profileImg:String,
     singlecontacts: Array,
     groupcontacts : Array
 
