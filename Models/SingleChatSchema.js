@@ -6,7 +6,9 @@ const SingleChat = mongoose.Schema({
 
     membersArray: Array,
     messageArray : Array,
-    chatInfo:Object
+    chatInfo:Object,
+    imagesArray:Array,
+    documentArray:Array
 
 })
 

@@ -164,7 +164,7 @@ io.on("connection", (socket) => {
   })
 
   socket.on('hang-call',(data) => {
-    onlineUserArray.map((user) => {s
+    onlineUserArray.map((user) => {
       if (user.userid === data.userid) {
         io.to(user.socketid).emit("call-Hanged", data);
       }

@@ -69,6 +69,7 @@ exports.signup = async (req, res) => {
   );
 
   req.body.password = encryptedpassword;
+  req.body.profileImg = '';
 
   try {
 
@@ -124,7 +125,8 @@ exports.login = async (req, res) => {
         message: "Login successful",
         token: token,
         userid: encryptedUserid,
-        username:user.userName
+        username:user.userName,
+        profileImg:user.profileImg
       };
 
       res.send(response);
@@ -188,6 +190,7 @@ exports.getProfile = async (req, res) => {
       fullname: user.firstName,
       email: user.email,
       phonenumber: user.phoneNumber,
+      profileImg:user.profileImg
     };
 
     res.send(response);
@@ -212,7 +215,8 @@ exports.EditProfile = async (req, res) => {
       firstName: req.body.firstName,
       userName: req.body.userName,
       email: req.body.email,
-      phoneNumber:req.body.phoneNumber
+      phoneNumber:req.body.phoneNumber,
+      profileImg:req.body.profileImg
     },
   };
 
@@ -281,5 +285,31 @@ exports.changePassword = async(req,res) => {
     res.send(response);
   }
 
+}
+
+
+exports.updateProfilePic=async(req,res)=>{
+  userid = common.Decrypt(req.body.userid, process.env.SECERET_KEY);
+  var myquery = { _id: userid };
+  var newvalues = {
+    $set: {
+      profilePic:req.body.profilePic
+    },
+  };
+
+  try {
+    await UserSchema.updateOne(myquery, newvalues);
+
+    let response = {
+      statusCode: 200,
+      message: "Profile Picture Changed Successfully",
+    };
+
+    res.send(response);
+  } catch (error) {
+    let response = { statusCode: 201, message: "Something went wrong!" };
+    console.log(error);
+    res.send(response);
+  }
 }
 
