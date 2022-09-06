@@ -57,7 +57,7 @@ const server = app.listen(port, () => {
 
 
 
-
+// Socket Connections
 let onlineUserArray = [];
 
 const removeUser = (socketid) => {
@@ -66,7 +66,7 @@ const removeUser = (socketid) => {
 
 const io = socket(server, {
   cors: {
-    origin: "https://chit-chat-communication.netlify.app",
+    origin: process.env.FRONTEND_URL,
     methods: ["GET", "POST"],
   },
 });
