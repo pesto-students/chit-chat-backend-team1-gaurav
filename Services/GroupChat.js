@@ -523,3 +523,42 @@ exports.GetImagesArray = async (req, res) => {
       res.send(response);
     }
   };
+
+  exports.getGroupMembers=async(req,res)=>{
+    try {
+  
+      let group = await GroupChat.find(
+        { _id: req.body.groupid }
+      );
+  
+      res.send(group.membersArray);
+  
+    } catch (err) {
+      let response = { statusCode: 201, message: "Something went wrong!" };
+      console.log(err);
+      res.send(response);
+    }
+  };
+
+  exports.updateProfilePic=async(req,res)=>{
+    var userid = common.Decrypt(req.body.userid, process.env.SECERET_KEY);
+    try {
+      let user = await UserSchema.findOne({ _id: userid });
+      for(let group of user.groupcontacts){
+        const query = { _id:group.groupId , "membersArray.userid": req.body.userid };
+        const updateDocument = {
+          $set: { "membersArray.profileImg": req.body.profileImg }
+        };
+        const result = await GroupChat.updateOne(query, updateDocument);
+      }
+      res.send({
+        message:'Profile Image Updated Succesfully'
+      })
+     
+     
+    } catch (err) {
+      let response = { statusCode: 201, message: "Something went wrong!" };
+      console.log(err);
+      res.send(response);
+    }
+  };
