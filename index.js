@@ -41,7 +41,7 @@ app.use("/group", group);
 const connectToMongo = async () => {
   await mongo()
     .then((mongoose) => {
-      console.log("mongo db connected");
+      ("mongo db connected");
     })
     .catch((err) => {
       console.log(err);
@@ -53,9 +53,6 @@ connectToMongo();
 const server = app.listen(port, () => {
   console.log(`server is running on port ${port}`);
 });
-
-
-
 
 // Socket Connections
 let onlineUserArray = [];
@@ -111,7 +108,6 @@ io.on("connection", (socket) => {
     });
   });
 
-
   socket.on("join-group", (groupid) => {
     socket.join(groupid);
   });
@@ -121,55 +117,53 @@ io.on("connection", (socket) => {
   });
 
   socket.on("user-typing-in-group", (data) => {
-      let userid = common.Decrypt(data.userid, process.env.SECERET_KEY);
-      io.to(data.groupid).emit("someone-typing-in-group", userid);
-    });
-    
-    socket.on("user-stops-typing-in-group", (groupid) => {
-      io.to(groupid).emit("stops-typing-in-group", groupid);
+    let userid = common.Decrypt(data.userid, process.env.SECERET_KEY);
+    io.to(data.groupid).emit("someone-typing-in-group", userid);
   });
 
+  socket.on("user-stops-typing-in-group", (groupid) => {
+    io.to(groupid).emit("stops-typing-in-group", groupid);
+  });
 
-  socket.on('call-user',(data) => {
+  socket.on("call-user", (data) => {
     onlineUserArray.map((user) => {
       if (user.userid === data.userid) {
         io.to(user.socketid).emit("incoming-call", data);
       }
     });
-  })
+  });
 
-
-  socket.on('cancle-call',(data) => {
+  socket.on("cancle-call", (data) => {
     onlineUserArray.map((user) => {
       if (user.userid === data.userid) {
         io.to(user.socketid).emit("call-cancled", data);
       }
     });
-  })
+  });
 
-  socket.on('reject-incoming-call',(data) => {
+  socket.on("reject-incoming-call", (data) => {
     onlineUserArray.map((user) => {
       if (user.userid === data.userid) {
         io.to(user.socketid).emit("call-rejected", data);
       }
     });
-  })
+  });
 
-  socket.on('accept-incoming-call',(data) => {
+  socket.on("accept-incoming-call", (data) => {
     onlineUserArray.map((user) => {
       if (user.userid === data.userid) {
         io.to(user.socketid).emit("call-Accepted", data);
       }
     });
-  })
+  });
 
-  socket.on('hang-call',(data) => {
+  socket.on("hang-call", (data) => {
     onlineUserArray.map((user) => {
       if (user.userid === data.userid) {
         io.to(user.socketid).emit("call-Hanged", data);
       }
     });
-  })
+  });
 
   socket.on("disconnect", () => {
     removeUser(socket.id);
