@@ -19,5 +19,9 @@ router.post('/updateimagesarray',group.UpdateImagesArray);
 router.post('/updatedocumentsarray',group.updateDocumentsArray);
 router.post('/getdocumentsarray',group.getDocumentsArray);
 
+router.post('/getgroupmembers',group.getGroupMembers);
+router.post('/updateprofilepic',group.getGroupMembers);
+
+
 
 module.exports = router;
