@@ -29,7 +29,6 @@ exports.CurrentContacts = async (req, res) => {
           { messageArray: { $slice: 1 } }
         );
 
-
         singleContactObj["userid"] = contact.contactid;
         singleContactObj["username"] = contactuser.userName;
         singleContactObj["profileImg"] = contactuser.profileImg;
@@ -131,8 +130,6 @@ exports.searchContacts = async (req, res) => {
       return item._id != userid;
     });
 
-   
-
     res.send(filteredUsers);
   } catch (err) {
     let response = { statusCode: 201, message: "Something went wrong!" };
@@ -147,8 +144,8 @@ exports.addChat = async (req, res) => {
   let singlechatbody = {
     membersArray: [userid, req.body.otheruser],
     messageArray: [],
-    imagesArray:[],
-    documentArray:[],
+    imagesArray: [],
+    documentArray: [],
     chatInfo: {
       initial: true,
       senderaddedtoreceiver: false,
@@ -248,36 +245,35 @@ exports.StarMarkMessage = async (req, res) => {
       type: req.body.type,
     };
 
-    console.log(starMessageObj, req.body.contactid,userid);
+    new Promise(async (resolve, reject) => {
+      let user = await UserSchema.findOne({
+        _id: userid,
+        "singlecontacts.staredMessages.timestamp": req.body.timestamp,
+      });
 
-    new Promise( async (resolve,reject) => {
-
-      let user = await UserSchema.findOne({  _id: userid, "singlecontacts.staredMessages.timestamp": req.body.timestamp })
-
-      if(user === null)
-      resolve()
-      else
-      reject()
-
+      if (user === null) resolve();
+      else reject();
     })
-    .then( async () => {
-      
-      await UserSchema.updateOne(
+      .then(async () => {
+        await UserSchema.updateOne(
           { _id: userid, "singlecontacts.contactid": req.body.contactid },
-          { $push: {
-            "singlecontacts.$.staredMessages": { $each: [starMessageObj] },
-          }}
+          {
+            $push: {
+              "singlecontacts.$.staredMessages": { $each: [starMessageObj] },
+            },
+          }
         );
 
-        let response = {statusCode: 200,message: "Star Marked Successfully..",};
+        let response = {
+          statusCode: 200,
+          message: "Star Marked Successfully..",
+        };
         res.send(response);
-    })
-    .catch(() => {
-      let response = {statusCode: 200,message: "Already Added..",};
+      })
+      .catch(() => {
+        let response = { statusCode: 200, message: "Already Added.." };
         res.send(response);
-    })
-
-
+      });
   } catch (err) {
     let response = { statusCode: 201, message: "Something went wrong!" };
     res.send(response);
@@ -307,15 +303,10 @@ exports.LoadStarMessages = async (req, res) => {
 };
 
 exports.GetImagesArray = async (req, res) => {
-
   try {
-
-    let chatObj = await SingleChat.find(
-      { _id: req.body.chatid }
-    );
+    let chatObj = await SingleChat.find({ _id: req.body.chatid });
 
     res.send(chatObj[0].imagesArray);
-
   } catch (err) {
     let response = { statusCode: 201, message: "Something went wrong!" };
     console.log(err);
@@ -324,47 +315,36 @@ exports.GetImagesArray = async (req, res) => {
 };
 
 exports.UpdateImagesArray = async (req, res) => {
-
   try {
-
-    let imageObj={
-      key:req.body.key,
-      timestamp:Date.now()
-    }
+    let imageObj = {
+      key: req.body.key,
+      timestamp: Date.now(),
+    };
 
     let update = await SingleChat.updateOne(
       { _id: req.body.chatid },
       { $push: { imagesArray: { $each: [imageObj], $position: 0 } } }
     );
 
-   
-    if(update.modifiedCount === 1){
+    if (update.modifiedCount === 1) {
       let response = { statusCode: 200 };
       res.send(response);
-    }
-    else{
+    } else {
       let response = { statusCode: 201 };
       res.send(response);
     }
-
   } catch (err) {
     let response = { statusCode: 201, message: "Something went wrong!" };
     console.log(err);
     res.send(response);
   }
 };
-
 
 exports.getDocumentsArray = async (req, res) => {
-
   try {
-
-    let chatObj = await SingleChat.find(
-      { _id: req.body.chatid }
-    );
+    let chatObj = await SingleChat.find({ _id: req.body.chatid });
 
     res.send(chatObj[0].documentArray);
-
   } catch (err) {
     let response = { statusCode: 201, message: "Something went wrong!" };
     console.log(err);
@@ -372,33 +352,27 @@ exports.getDocumentsArray = async (req, res) => {
   }
 };
 
-
 exports.updateDocumentsArray = async (req, res) => {
-
   try {
-
-    let documentObj={
-      key:req.body.key,
-      name:req.body.name,
-      size:req.body.size,
-      timestamp:Date.now()
-    }
+    let documentObj = {
+      key: req.body.key,
+      name: req.body.name,
+      size: req.body.size,
+      timestamp: Date.now(),
+    };
 
     let update = await SingleChat.updateOne(
       { _id: req.body.chatid },
       { $push: { documentArray: { $each: [documentObj], $position: 0 } } }
     );
 
-   
-    if(update.modifiedCount === 1){
+    if (update.modifiedCount === 1) {
       let response = { statusCode: 200 };
       res.send(response);
-    }
-    else{
+    } else {
       let response = { statusCode: 201 };
       res.send(response);
     }
-
   } catch (err) {
     let response = { statusCode: 201, message: "Something went wrong!" };
     console.log(err);
