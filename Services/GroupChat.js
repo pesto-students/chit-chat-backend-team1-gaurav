@@ -489,9 +489,14 @@ exports.updateDocumentsArray = async (req, res) => {
 
 exports.getGroupMembers = async (req, res) => {
   try {
+
+    let userid = common.Decrypt(req.body.userid, process.env.SECERET_KEY);
+
     let group = await GroupChat.find({ _id: req.body.groupid });
 
-    res.send(group[0].membersArray);
+    let array = group[0].membersArray.filter((member) => member.userid !== userid);
+
+    res.send(array);
   } catch (err) {
     let response = { statusCode: 201, message: "Something went wrong!" };
     console.log(err);
