@@ -246,13 +246,13 @@ exports.changePassword = async(req,res) => {
   let userid = common.Decrypt(req.body.userid, process.env.SECERET_KEY);
   
   try {
-    let user = await UserSchema.findOne({ id:userid });
+    let user = await UserSchema.findOne({ _id:userid });
     
     let oldpassword = common.Decrypt(user.password, process.env.SECERET_KEY);
 
     if((req.body.oldpassword) === oldpassword)
     {
-      var myquery = { id: userid };
+      var myquery = { _id: userid };
       let newPassword = common.Encrypt(req.body.newpassword,process.env.SECERET_KEY);
 
       var newvalues = {
