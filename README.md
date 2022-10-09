@@ -1,21 +1,57 @@
-# Pesto Assignments
+# Chit-Chat
 
-Welcome to Pesto assignments.
+![ProDB-kit Logo](./Assets/Logo.png)
+
+Chit-Chat is a real time chat application where you can send messages,
+share media files like images, documents, videos etc. You can also
+communicate or hangout with your friends or colleagues via video call or
+audio call. Our application also allows to create active communities with
+features like screen sharing, group meetings etc.
+
+<br/>
+
+# Table of Contents
+
+1. [Demo](#demo)
+2. [Installation](#installation)
+3. [Technology Stack](#technology-stack)
+4. [Authors](#authors)
+5. [License](#license)
+
+<br/>
+
+# Demo
+
+[Live Demo](https://chit-chat-chit-chat.vercel.app)
+
+<br/>
 
 
-## How to solve assignments
+# Installation
 
-Weekly Assignments will be shared by your mentor or instructor.
+- Fork or directly clone this repository to your local machine
+- Use the `npm install` command to install dependencies
+- Once the dependencies are finished installing, use the `npm start` command inside the root directory to open the app in your local browser of choice
 
-Make sure master or main branch is protected and you are not able to push any code directly to master.
+<br/>
 
-- Clone this repo to your local.
-- Checkout to new branch for submission. Suggestion you can name new branch week wise - branch for week 1 assignment can be week1
-```bash
-git checkout -b week1
-```
-- Create Assignment week folder in root directory(if it doesn't exist) for eg. for solving week 1 assignment create folder with name "week1".
-- You can create subfolders in main week(week1) folder if required.
-- Add proper readme [(How to Write proper readme](https://meakaakka.medium.com/a-beginners-guide-to-writing-a-kickass-readme-7ac01da88ab3) )in week's folder or subfolder explaining about assignment, how to run assignment and any other instructions. 
-- Raise a PR against master and add your mentor as reviewer
-- Resolve PR comments if any and once your mentor approves your PR, Merge it.
+# Technology Stack
+
+We tried to use a completely modern tech stack while testing out some new technologies that we had never used before. This resulted in a fast, performant, and easily-extensible web app that should be fairly future-proof for the coming next several years. We used:
+
+- [Node JS](https://nodejs.org/)
+- [Express](https://expressjs.com/)
+- [Socket.IO](https://socket.io/)
+
+<br/>
+
+# Authors
+
+-[@dhruvinbhuva] (https://github.com/Dhruvin-github) <br/>
+-[@tarunsai] (https://github.com/tarunsai217)
+
+<br/>
+
+# License
+
+[MIT](https://opensource.org/licenses/MIT)
